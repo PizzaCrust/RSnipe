@@ -39,9 +39,9 @@ class AuthenticatedSession internal constructor(var rKey: String,
 
     init {
         val scheduledExecutor = Executors.newSingleThreadScheduledExecutor()
-        scheduledExecutor.schedule({
+        scheduledExecutor.scheduleAtFixedRate({
             renew()
-        }, 5, TimeUnit.MINUTES)
+        }, 0, 5, TimeUnit.MINUTES)
     }
 
     fun renew() {
@@ -66,4 +66,32 @@ class AuthenticatedSession internal constructor(var rKey: String,
         POST(HttpRequest.BodyPublisher.noBody())
     }, HttpResponse.BodyHandler.asString())
 
+}
+
+private val snipedItems: MutableList<Long> = mutableListOf()
+
+private data class BalanceCountResponse(var robux: Int) {
+    constructor():this(0)
+}
+
+private fun robuxCount(authSession: AuthenticatedSession): Int {
+    val url = "http://api.roblox.com/currency/balance"
+    val responseString = authClient.send(authSession.authReq {
+        uri(URI(url))
+        GET()
+    }, HttpResponse.BodyHandler.asString()).body()
+    val response = Gson().fromJson<BalanceCountResponse>(responseString, BalanceCountResponse::class.java)
+    return response.robux
+}
+
+fun startSniping(authSession: AuthenticatedSession) {
+    val executor = Executors.newSingleThreadScheduledExecutor()
+    executor.scheduleAtFixedRate({
+        for (limited in findRecentlyUpdatedLimiteds()) {
+            if (!snipedItems.contains(limited.id) && robuxCount(authSession) >= limited.price) {
+                authSession.purchase(limited)
+                snipedItems.add(limited.id)
+            }
+        }
+    }, 0, 20, TimeUnit.SECONDS)
 }
