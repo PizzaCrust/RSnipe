@@ -52,6 +52,8 @@ class AuthenticatedSession internal constructor(var rKey: String,
 
     fun authReq(builder: HttpRequest.Builder.() -> Unit): HttpRequest {
         val obj = HttpRequest.newBuilder()
+        obj.setHeader("Cookie", rKey)
+        obj.setHeader("X-CSRF-TOKEN", vKey)
         builder(obj)
         return obj.build()
     }
