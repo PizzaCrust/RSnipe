@@ -56,4 +56,14 @@ class AuthenticatedSession internal constructor(var rKey: String,
         return obj.build()
     }
 
+    fun purchase(productInfo: ProductInformation) = authClient.send(authReq {
+        val url = "https://www.roblox.com/api/item" +
+                ".ashx?rqtype=purchase&productID=${productInfo
+                        .id}&expectedCurrency=1&expectedPrice" +
+                "=${productInfo.price}" +
+                "&expectedSellerID=${productInfo.sellerId}&userAssetID="
+        uri(URI(url))
+        POST(HttpRequest.BodyPublisher.noBody())
+    }, HttpResponse.BodyHandler.asString())
+
 }
