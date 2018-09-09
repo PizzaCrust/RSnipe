@@ -89,9 +89,19 @@ fun startSniping(authSession: AuthenticatedSession) {
     executor.scheduleAtFixedRate({
         for (limited in findRecentlyUpdatedLimiteds()) {
             if (!snipedItems.contains(limited.id) && robuxCount(authSession) >= limited.price) {
+                println("sniping ${limited.id}")
                 authSession.purchase(limited)
                 snipedItems.add(limited.id)
             }
         }
     }, 0, 20, TimeUnit.SECONDS)
+}
+
+fun main(vararg strings: String) {
+    if (strings.size < 2) {
+        println("not enough arguments, must have 2 (username and password)")
+        return
+    }
+    println("starting sniper...")
+    startSniping(authenticate(strings[0], strings[1]))
 }
